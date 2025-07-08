@@ -81,66 +81,28 @@ class Board:
         if not self.check_board: # There's an error!
             return False
         for i in range(9):
-            # print ('------------')
-            # # SOLVE ROW
-            # row = self.get_row(i)
-            # print('ROW')
-            # print(board)
-            # print(row)
-            # if row.count('.') == 1:
-            #     x = row.index(".")
-            #     value = VALID_NUMS.difference(set(row)).pop() # get the missing value
-            #     self.init_cell(value, x=x, y=i)
-            # # SOLVE COL
-            # col = self.get_col(i)
-            # print('COL')
-            # print(board)
-            # print(col)
-            # if col.count('.') == 1:
-            #     y = col.index(".")
-            #     value = VALID_NUMS.difference(set(col)).pop() # get the missing value
-            #     self.init_cell(value, x=i, y=y)
-            # # SOLVE BLOCK
+            # SOLVE ROW
+            row = self.get_row(i)
+            if row.count('.') == 1:
+                value = VALID_NUMS.difference(set(row)).pop() # get the missing value
+                x = row.index(".")
+                y = i
+                self.init_cell(value,x,y)
+            # SOLVE COL
+            col = self.get_col(i)
+            if col.count('.') == 1:
+                value = VALID_NUMS.difference(set(col)).pop() # get the missing value
+                x = i
+                y = col.index(".")
+                self.init_cell(value,x,y)
+            # SOLVE BLOCK
             block = self.get_block(i)
-            print('BLOCK')
-            print(board)
-            print(block)
             if block.count('.') == 1:
-                y_index = {0: {0: 0,
-                               1: 1,
-                               2: 2},
-                           1: {0: 0,
-                               1: 1,
-                               2: 2},
-                           2: {0: 0,
-                               1: 1,
-                               2: 2},
-                           3: {0: 3,
-                               1: 4,
-                               2: 5},
-                           4: {0: 3,
-                               1: 4,
-                               2: 5},
-                           5: {0: 3,
-                               1: 4,
-                               2: 5},
-                           6: {0: 6,
-                               1: 7,
-                               2: 8},
-                           7: {0: 6,
-                               1: 7,
-                               2: 8},
-                           8: {0: 6,
-                               1: 7,
-                               2: 8},}
                 index = block.index(".")
-                print(i, index)
-                print(i%3, index%3)
                 value = VALID_NUMS.difference(set(block)).pop() # get the missing value
-                print(value)
-                x = index
-                y = y_index[i]
-                self.init_cell(value, x=x, y=y)
+                x = (i%3)*3 + (index%3)
+                y = (i//3)*3 + (index//3)
+                self.init_cell(value,x,y)
         return True
 
 def init_board(board: Board, data:list) -> None:
@@ -164,6 +126,7 @@ unsolved_data = ['...26.7.1',
         '..93...74',
         '.4..5..36',
         '7.3.18...']
+
 solved_data = ['435269781',
         '682571493',
         '197834562',
@@ -174,14 +137,14 @@ solved_data = ['435269781',
         '248957136',
         '763418259']
 
-test_data = ['435269781',
-        '682571493',
+test_data = ['4352697.1',
+        '68.571493',
         '197834562',
-        '826195347',
+        '82619.347',
         '374682915',
-        '.51743628',
+        '95.743628',
         '519326874',
-        '248957136',
+        '24895.136',
         '763418259']
 
 init_board(board, test_data)
