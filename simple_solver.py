@@ -2,10 +2,10 @@
 Simple soduku solver.
 https://hodoku.sourceforge.net/en/techniques.php
 '''
-# Imports
+# --- Imports ---
 from typing import Callable
 
-
+# --- Classes ---
 class Cell:
     '''
     A single sudoku cell with coordinates x, y. '.' indicates an empty cell.
@@ -89,7 +89,7 @@ class Board:
                 block.append(self.data[y][x])
         return block
 
-
+# --- Helper Functions ---
 def init_board(board_obj: Board, data:list) -> None:
     '''Fills board with either numbers or .'''
     # Input checks
@@ -102,25 +102,32 @@ def init_board(board_obj: Board, data:list) -> None:
         board_obj.set_row(rowdata, i)
 
 
-def solve_one(_board: Board, get_group: Callable) -> bool:
-    '''Solves for all of a board's naked singles for a group (rows, columns, or blocks).
-    Returns if change to board was made.'''
+def is_solved(_board: Board) -> bool:
+    '''Checks if board is solved (no empty cells and valid).'''
     assert _board.check_board(), f"Error in board!\n{_board}"
-    changed = False
-    valid_nums = {str(i) for i in range(1, _board.n + 1)}
-    for i in range(_board.n):
-        group = get_group(i) # Get group
-        empty_cells = [cell for cell in group if cell.value == '.']
-        if len(empty_cells) == 1: # Only one empty cell
-            missing_value = valid_nums.difference({cell.value for cell in group}).pop()
-            empty_cells[0].set(missing_value)
-            changed = True
-    return changed
+    return not any(cell.value == '.' for row in _board.data for cell in row)
 
 
+# --- Solver Functions ---
 def last_digit(_board: Board) -> bool:
     '''Solves for the last digit for rows, columns, and blocks until no more progress can be made.
     Returns True if any changes were made to the board.'''
+    
+    def solve_one(_board: Board, get_group: Callable) -> bool:
+        '''Solves for all of a board's last digits for a group (rows, columns, or blocks).
+        Returns if change to board was made.'''
+        assert _board.check_board(), f"Error in board!\n{_board}"
+        changed = False
+        valid_nums = {str(i) for i in range(1, _board.n + 1)}
+        for i in range(_board.n):
+            group = get_group(i) # Get group
+            empty_cells = [cell for cell in group if cell.value == '.']
+            if len(empty_cells) == 1: # Only one empty cell
+                missing_value = valid_nums.difference({cell.value for cell in group}).pop()
+                empty_cells[0].set(missing_value)
+                changed = True
+        return changed
+
     total_changed = False
     while True:
         row_changed = solve_one(_board, _board.get_row)
@@ -133,16 +140,7 @@ def last_digit(_board: Board) -> bool:
     return total_changed
 
 
-def find_pencil(_board: Board) -> None:
-    '''Finds pencil marks for each cell.'''
-    
-
-def is_solved(_board: Board) -> bool:
-    '''Checks if board is solved (no empty cells and valid).'''
-    assert _board.check_board(), f"Error in board!\n{_board}"
-    return not any(cell.value == '.' for row in _board.data for cell in row)
-
-
+# --- Main Functions ---
 def solver(_board: Board) -> Board:
     '''Main sudoku solver logic.'''
     print('Solving board...')
@@ -158,10 +156,24 @@ def solver(_board: Board) -> Board:
         if not any(changed):
             print("Board cannot be solved with current logic!")
             return _board
-            
 
-board = Board(9)
-unsolved_data = ['...26.7.1',
+
+def main(_n:int, _data:list) -> None:
+    '''Main function that handles print output.'''
+    board = Board(_n)
+    init_board(board, _data)
+    print('\n---\n')
+    print(board)
+    print('\n')
+    board = solver(board)
+    print('\n---\n')
+    print(board)
+
+
+if __name__ == '__main__':
+    '''Run at init'''
+    unsolved_data = [
+        '...26.7.1',
         '68..7..9.',
         '19...45..',
         '82.1...4.',
@@ -170,7 +182,8 @@ unsolved_data = ['...26.7.1',
         '..93...74',
         '.4..5..36',
         '7.3.18...']
-solved_data = ['435269781',
+    solved_data = [
+        '435269781',
         '682571493',
         '197834562',
         '826195347',
@@ -179,7 +192,8 @@ solved_data = ['435269781',
         '519326874',
         '248957136',
         '763418259']
-test_data = ['4352697.1',
+    test_data = [
+        '4352697.1',
         '68.571493',
         '197834562',
         '82619.347',
@@ -188,11 +202,5 @@ test_data = ['4352697.1',
         '519326874',
         '24895.136',
         '763418259']
-
-init_board(board, unsolved_data)
-print('\n---\n')
-print(board)
-print('\n')
-board = solver(board)
-print('\n---\n')
-print(board)
+    
+    main(9, test_data)
