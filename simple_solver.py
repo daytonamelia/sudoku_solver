@@ -11,11 +11,18 @@ class Cell:
     A single sudoku cell with coordinates x, y. '.' indicates an empty cell.
     '''
     def __init__(self, _x: int, _y: int, _value: str = '.', ) -> None:
-        '''Creates a cell with coordinates x,  y and an optional value.'''
+        '''Creates a cell with coordinates x, y, block, and an optional value.'''
         self.x = _x
         self.y =_y
+        self.z = self.find_block()
         self.value = _value
-        self.pencil = None if self.value != '.' else []
+        self.pencil = set()
+
+    def find_block(self) -> int:
+        '''Finds which block (z) the cell is in. Returns block number 0-8.'''
+        row_block = self.y // 3
+        col_block = self.x // 3
+        return row_block * 3 + col_block
 
     def __str__(self) -> str:
         '''Returns cell value as a string.'''
@@ -26,10 +33,10 @@ class Cell:
         print(f"INFO: Setting cell at ({self.x}, {self.y}) to {_value}")
         self.value = _value
         
-    def set_pencil(self, marks:list) -> None:
-        '''Set the cell's pencil marks.'''
-        self.pencil = marks
-
+    def set_pencil(self, _marks:set) -> None:
+        '''Update the cell's pencil marks.'''
+        self.pencil.update(_marks)
+        
 
 class Board:
     '''
@@ -56,12 +63,11 @@ class Board:
 
     def check_board(self) -> bool:
         '''Checks if board is valid.'''
-        valid_nums = {str(i) for i in range(1, self.n + 1)}
         for i in range(self.n):
             row = self.get_row(i)
             col = self.get_col(i)
             block = self.get_block(i)
-            for num in valid_nums:
+            for num in VALID_NUMS:
                 row_count = sum(1 for cell in row if cell.value == num)
                 col_count = sum(1 for cell in col if cell.value == num)
                 block_count = sum(1 for cell in block if cell.value == num)
@@ -69,6 +75,10 @@ class Board:
                     print(f"On {num}: {row_count} rows, {col_count} cols, {block_count} blocks.")
                     return False
         return True
+
+    def get_cell(self, x:int, y:int) -> Cell:
+        '''Returns a Cell from x and y coordinates.'''
+        return self.data[y][x]
 
     def get_row(self, y: int) -> list:
         '''Returns a row as a list of Cell objects.'''
@@ -108,26 +118,38 @@ def is_solved(_board: Board) -> bool:
     return not any(cell.value == '.' for row in _board.data for cell in row)
 
 
+def solve_one(_board: Board, get_group: Callable) -> bool:
+    '''Solves for all of a board's last digits for a group (rows, columns, or blocks).
+    Returns if change to board was made.'''
+    assert _board.check_board(), f"Error in board!\n{_board}"
+    changed = False
+    for i in range(_board.n):
+        group = get_group(i) # Get group
+        empty_cells = [cell for cell in group if cell.value == '.']
+        if len(empty_cells) == 1: # Only one empty cell
+            missing_value = VALID_NUMS.difference({cell.value for cell in group}).pop()
+            empty_cells[0].set(missing_value)
+            changed = True
+    return changed
+    
+
+def find_pencil(_board: Board, _cell: Cell) -> int:
+    '''Find pencil marks for a cell.'''
+    if _cell.value != '.':
+        return 0
+    row = set([cell.value for cell in _board.get_row(_cell.y) if cell.value != '.'])
+    col = set([cell.value for cell in _board.get_col(_cell.x) if cell.value != '.'])
+    block = set([cell.value for cell in _board.get_block(_cell.z) if cell.value != '.'])
+    paradox = row.union(col, block)
+    marks = VALID_NUMS.difference(paradox)
+    _cell.set_pencil(marks)
+    return len(marks)
+
+
 # --- Solver Functions ---
 def last_digit(_board: Board) -> bool:
     '''Solves for the last digit for rows, columns, and blocks until no more progress can be made.
     Returns True if any changes were made to the board.'''
-    
-    def solve_one(_board: Board, get_group: Callable) -> bool:
-        '''Solves for all of a board's last digits for a group (rows, columns, or blocks).
-        Returns if change to board was made.'''
-        assert _board.check_board(), f"Error in board!\n{_board}"
-        changed = False
-        valid_nums = {str(i) for i in range(1, _board.n + 1)}
-        for i in range(_board.n):
-            group = get_group(i) # Get group
-            empty_cells = [cell for cell in group if cell.value == '.']
-            if len(empty_cells) == 1: # Only one empty cell
-                missing_value = valid_nums.difference({cell.value for cell in group}).pop()
-                empty_cells[0].set(missing_value)
-                changed = True
-        return changed
-
     total_changed = False
     while True:
         row_changed = solve_one(_board, _board.get_row)
@@ -140,18 +162,44 @@ def last_digit(_board: Board) -> bool:
     return total_changed
 
 
+def hidden_naked_single(_board:Board) -> bool:
+    '''Solves for hidden and naked singles for rows, columns, and blocks until no more progress can be made.
+    Returns True if any changes were made to the board.'''
+    total_changed = False
+    while True:
+        iteration_changed = False
+        for y in range(_board.n):  # y = row index
+            for x in range(_board.n):  # x = column index
+                cell = _board.get_cell(x, y)
+                if cell.value != '.':
+                    continue
+                marks = find_pencil(_board, cell)
+                if marks == 1:
+                    cell.set(cell.pencil.pop())
+                    total_changed = True
+                    iteration_changed = True
+        if not iteration_changed:
+            break
+    return total_changed
+
 # --- Main Functions ---
 def solver(_board: Board) -> Board:
     '''Main sudoku solver logic.'''
-    print('Solving board...')
+    iter = 0
     while True:
+        print('-')
+        print(iter)
+        iter += 1
         # Check if solved
         if is_solved(_board):
             print("Board solved!")
             return _board
         changed = []
         # Try all solving techniques
+        print("Checking for last digits...")
         changed.append(last_digit(_board))
+        print("Checking for naked singles...")
+        changed.append(hidden_naked_single(_board))
         # If nothing changed then unsolvable with current logic
         if not any(changed):
             print("Board cannot be solved with current logic!")
@@ -192,15 +240,17 @@ if __name__ == '__main__':
         '519326874',
         '248957136',
         '763418259']
-    test_data = [
-        '4352697.1',
-        '68.571493',
-        '197834562',
-        '82619.347',
-        '374682915',
-        '95.743628',
-        '519326874',
-        '24895.136',
-        '763418259']
+    hiddensingle_data = [
+        '.28..7...',
+        '.16.83.7.',
+        '....2.851',
+        '13729....',
+        '...73....',
+        '....463.7',
+        '29..7....',
+        '...86.14.',
+        '...3..7..']
     
-    main(9, test_data)
+    N = 9
+    VALID_NUMS = {str(i) for i in range(1, N + 1)}
+    main(N, hiddensingle_data)
