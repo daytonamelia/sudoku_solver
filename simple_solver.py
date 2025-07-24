@@ -12,12 +12,12 @@ class Cell:
     A single sudoku cell with coordinates x, y. '.' indicates an empty cell.
     '''
     def __init__(self, _x: int, _y: int, _value: str = '.', ) -> None:
-        '''Creates a cell with coordinates x, y, block, and an optional value.'''
-        self.x = _x
-        self.y =_y
-        self.z = self.find_block()
-        self.value = _value
-        self.pencil = set()
+        '''Creates a cell with coordinates col x, row y, block z, and an optional value.'''
+        self.x = _x # col
+        self.y =_y # row
+        self.z = self.find_block() # block
+        self.value = _value # value
+        self.pencil = set() # pencil marks
 
     def find_block(self) -> int:
         '''Finds which block (z) the cell is in. Returns block number 0-8.'''
@@ -119,20 +119,27 @@ def is_solved(_board: Board) -> bool:
     return not any(cell.value == '.' for row in _board.data for cell in row)
 
 
+def count_list_of_sets(in_list:list) -> dict:
+    '''Given a list of sets, find the occurence of each value.'''
+    value_counts = {}
+    for s in in_list:
+        for value in s:
+            value_counts[value] = value_counts.get(value, 0) + 1
+    return value_counts
+
+
+def find_unique_set_values(in_list: list) -> list:
+    '''Given a list of sets, find the index and values of sets with unique values.'''
+    value_counts = count_list_of_sets(in_list)
+    # Find sets that contain unique values
+    result = []
+    for i, s in enumerate(in_list):
+        unique_in_set = {value for value in s if value_counts[value] == 1}
+        if unique_in_set:
+            result.append((i, unique_in_set))
+    return result
+
 # --- Pencil Functions ---
-def find_pencil(_board: Board, _cell: Cell) -> int:
-    '''Find pencil marks for a cell and returns how many marks calculated for that cell.'''
-    if _cell.value != '.':
-        return 0
-    row = set([cell.value for cell in _board.get_row(_cell.y) if cell.value != '.'])
-    col = set([cell.value for cell in _board.get_col(_cell.x) if cell.value != '.'])
-    block = set([cell.value for cell in _board.get_block(_cell.z) if cell.value != '.'])
-    paradox = row.union(col, block)
-    marks = VALID_NUMS.difference(paradox)
-    _cell.set_pencil(marks)
-    return len(marks)
-
-
 def update_pencil(_board:Board) -> None:
     '''Update pencil marks for the entire board.'''
     for y in range(_board.n):  # y = row index
@@ -143,6 +150,67 @@ def update_pencil(_board:Board) -> None:
             find_pencil(_board, cell)
 
 
+def find_pencil(_board: Board, _cell: Cell) -> int:
+    '''Find pencil marks for a cell and returns how many marks calculated for that cell.'''
+    if _cell.value != '.':
+        return 0
+    # Set simple pencil marks
+    marks = simple_pencil(_board, _cell)
+    _cell.set_pencil(marks)
+    # More advanced logic
+    locked_candidates(_board, _cell)
+    return len(_cell.pencil)
+
+
+def simple_pencil(_board: Board, _cell: Cell) -> set:
+    '''Given a cell, find which pencil marks are possible with simple logic.'''
+    row = set([cell.value for cell in _board.get_row(_cell.y) if cell.value != '.'])
+    col = set([cell.value for cell in _board.get_col(_cell.x) if cell.value != '.'])
+    block = set([cell.value for cell in _board.get_block(_cell.z) if cell.value != '.'])
+    marks = row.union(col, block)
+    return VALID_NUMS.difference(marks)
+
+
+def locked_candidates(_board: Board, _cell: Cell) -> None:
+    '''Given a cell, find locked candiates for pencil marks.'''        
+    # Type I (pointing) by block
+    row = [cell for cell in _board.get_row(_cell.y) if cell.value == '.']
+    col = [cell for cell in _board.get_col(_cell.x) if cell.value == '.']
+    block = [cell for cell in _board.get_block(_cell.z) if cell.value == '.']
+    for candidate in _cell.pencil:
+        # Type I (pointing): If candidate in block is confined to one row/col
+        candidate_cells = [cell for cell in block if candidate in cell.pencil]
+        if len(candidate_cells) > 1:
+            if all(cell.y == candidate_cells[0].y for cell in candidate_cells):  # same row
+                for cell in row:
+                    if cell.z != candidate_cells[0].z:  # different block
+                        cell.pencil.discard(candidate)
+            elif all(cell.x == candidate_cells[0].x for cell in candidate_cells):  # same col
+                for cell in col:
+                    if cell.z != candidate_cells[0].z:  # different block
+                        cell.pencil.discard(candidate)
+        
+        # Type II (claiming): If candidate in row/col is confined to one block
+        row_cells = [cell for cell in row if candidate in cell.pencil]
+        if len(row_cells) > 1 and all(cell.z == row_cells[0].z for cell in row_cells):
+            for cell in block:
+                if cell.y != row_cells[0].y:  # different row
+                    cell.pencil.discard(candidate)
+        col_cells = [cell for cell in col if candidate in cell.pencil]
+        if len(col_cells) > 1 and all(cell.z == col_cells[0].z for cell in col_cells):
+            for cell in block:
+                if cell.x != col_cells[0].x:  # different col
+                    cell.pencil.discard(candidate)
+
+
+def hidden_subsets(_board: Board, _cell: Cell) -> None:
+    '''Given a cell find hidden subsets (pairs, triples, quadruples) for that cell.'''
+    # Hidden pair
+    row = [cell for cell in _board.get_row(_cell.y) if cell.value == '.']
+    col = [cell for cell in _board.get_col(_cell.x) if cell.value == '.']
+    block = [cell for cell in _board.get_block(_cell.z) if cell.value == '.']
+    
+    
 # --- Solver Functions ---
 def last_digit(_board: Board) -> bool:
     '''Solves for the last digit for rows, columns, and blocks until no more progress can be made.
@@ -210,17 +278,8 @@ def hidden_single(_board:Board) -> bool:
                     continue
                 else:
                     cell_marks.append(cell.pencil)
-            # Find cells with hidden singles
-            mark_counts = {} # Count occurences
-            for marks in cell_marks:
-                for value in marks:
-                    mark_counts[value] = mark_counts.get(value, 0) + 1
-            hidden_singles = [] # Find hidden singles
-            for i, marks in enumerate(cell_marks):
-                unique_marks = {value for value in marks if mark_counts[value] == 1}
-                if unique_marks:
-                    hidden_singles.append((i, unique_marks))
             # Solve for hidden singles
+            hidden_singles = find_unique_set_values(cell_marks)
             if len(hidden_singles) > 0:
                 for single in hidden_singles:
                     index = single[0]
@@ -264,6 +323,7 @@ def solver(_board: Board) -> Board:
             print("Board solved!")
             return _board
         changed = []
+
         # Try all solving techniques
         print("Checking for last digits...")
         changed.append(last_digit(_board))
@@ -271,6 +331,7 @@ def solver(_board: Board) -> Board:
         changed.append(naked_single(_board))
         print("Checking for hidden singles...")
         changed.append(hidden_single(_board))
+
         # Check board
         assert _board.check_board(), f"Error in board!\n{_board}"
         # If nothing changed then unsolvable with current logic
