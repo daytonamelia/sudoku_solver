@@ -310,7 +310,7 @@ def hidden_single(_board:Board) -> bool:
 
 
 # --- Main Functions ---
-def solver(_board: Board) -> Board:
+def solve(_board: Board) -> Board:
     '''Main sudoku solver logic.'''
     iter = 0
     while True:
@@ -347,7 +347,7 @@ def main(_n:int, _data:list) -> None:
     print('\n---\n')
     print(board)
     print('\n')
-    board = solver(board)
+    board = solve(board)
     print('\n---\n')
     print(board)
 
