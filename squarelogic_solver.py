@@ -1,3 +1,7 @@
+'''
+Sudoku solver for the kenken/calcudoku video game Everyday Genius: SquareLogic.
+https://store.steampowered.com/app/32150/Everyday_Genius_SquareLogic/
+'''
 # --- Imports ---
 import time
 from PIL import Image
