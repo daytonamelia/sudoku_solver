@@ -151,10 +151,10 @@ def update_pencil(_board:Board) -> None:
 
 
 def find_pencil(_board: Board, _cell: Cell) -> int:
-    '''Find pencil marks for a cell and returns how many marks calculated for that cell.'''
+    '''Find pencil marks for a cell and returns how many pencil marks that cell has.'''
     if _cell.value != '.':
         return 0
-    # Set simple pencil marks
+    # Set simple pencil marks to start
     marks = simple_pencil(_board, _cell)
     _cell.set_pencil(marks)
     # More advanced logic
@@ -205,7 +205,7 @@ def locked_candidates(_board: Board, _cell: Cell) -> None:
 
 def hidden_subsets(_board: Board, _cell: Cell) -> None:
     '''Given a cell find hidden subsets (pairs, triples, quadruples) for that cell.'''
-    # Hidden pair
+    # TODO: Hidden pair
     row = [cell for cell in _board.get_row(_cell.y) if cell.value == '.']
     col = [cell for cell in _board.get_col(_cell.x) if cell.value == '.']
     block = [cell for cell in _board.get_block(_cell.z) if cell.value == '.']
@@ -310,7 +310,7 @@ def hidden_single(_board:Board) -> bool:
 
 
 # --- Main Functions ---
-def solve(_board: Board) -> Board:
+def solver(_board: Board) -> Board:
     '''Main sudoku solver logic.'''
     iter = 0
     while True:
@@ -347,7 +347,7 @@ def main(_n:int, _data:list) -> None:
     print('\n---\n')
     print(board)
     print('\n')
-    board = solve(board)
+    board = solver(board)
     print('\n---\n')
     print(board)
 
