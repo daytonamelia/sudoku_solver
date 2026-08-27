@@ -1,7 +1,6 @@
 """
-Sudoku olver functions and strategies.
+Sudoku solver functions and strategies.
 """
-
 from typing import Callable
 
 from .board import Board, find_unique_set_values

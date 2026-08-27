@@ -2,25 +2,32 @@
 Board and Cell datamodels and functions.
 """
 from __future__ import annotations
+import math
 import logging
 
 logger = logging.getLogger(__name__)
+
+class BoardError(Exception):
+    """Board validation error."""
+    def __init__(self, message: str, value: int | None = None) -> None:
+        super().__init__(message)
+        self.value = value
 
 class Cell:
     """
     A single sudoku cell with coordinates col, row. '.' indicates an empty cell.
     """
-    def __init__(self, col: int, row: int, value: str = '.', ) -> None:
+    def __init__(self, col: int, row: int, block_size: int, value: str = '.',) -> None:
         """Creates a cell with coordinates (col, row, block), and an optional value."""
         self.col = col
         self.row = row
-        self.block = self.find_block()
+        self.block = self.find_block(block_size)
         self.value = value
         self.pencil = set()
 
-    def find_block(self) -> int:
+    def find_block(self, block_size: int) -> int:
         """Finds which block the cell is in. Returns block number 0-8."""
-        return (self.row // 3) * 3 + (self.col // 3)
+        return (self.row // block_size) * block_size + (self.col // block_size)
 
     def __str__(self) -> str:
         """Returns cell value as a string."""
@@ -41,10 +48,20 @@ class Board:
     A square sudoku board of nxn Cell objects.
     """
     def __init__(self, n:int=9) -> None:
-        """Creates an empty square board of n lists of Cells within a list."""
+        """
+        Creates an empty square board of n lists of Cells within a list.
+        n must be a perfect square.
+        """
+        if int(math.sqrt(n)) ** 2 != n:
+            raise BoardError(f"Board size must be a perfect square. Passed: {n}", value=n)
         self.n = n
+        self.block_size = int(math.sqrt(n))
         self.valid_nums = {str(i) for i in range(1, n+1)}
-        self.data = [[Cell(col, row) for col in range(self.n)] for row in range(self.n)]
+        self.data = [
+            [Cell(col, row, self.block_size)
+             for col in range(self.n)]
+            for row in range(self.n)
+            ]
 
     def __str__(self) -> str:
         """Returns board as space-delineated string with each row as a new line."""
@@ -90,25 +107,24 @@ class Board:
 
     def get_block(self, n: int) -> list:
         """
-        Returns a block as a list of Cell objects. 
-        Z must be between 0-8 inclusive and starts from top-left of the board.
+        Returns a block as a list of Cell objects starting from top-left of the board.
         """
-        start_row = (n // 3) * 3
-        start_col = (n % 3) * 3
+        start_row = (n // self.block_size) * self.block_size
+        start_col = (n % self.block_size) * self.block_size
         return [self.data[row][col]
-                for row in range(start_row, start_row + 3)
-                for col in range(start_col, start_col + 3)]
+                for row in range(start_row, start_row + self.block_size)
+                for col in range(start_col, start_col + self.block_size)]
 
 
 def init_board(board: Board, data:list) -> None:
     """Fills board with either numbers or ."""
     # Input checks
-    assert len(data) == board.n, \
-        f"Input data has length {len(data)}."
-    assert all(isinstance(item, str) for item in data), \
-        "Input data must contain only strings."
-    assert all(len(item) == board.n for item in data), \
-        f"Input data must have {board.n} items in each string."
+    if len(data) != board.n:
+        raise BoardError(f"Expected {board.n} rows, got {len(data)}.")
+    if not all(isinstance(item, str) for item in data):
+        raise BoardError("Input data must contain only strings.")
+    if not all(len(item) == board.n for item in data):
+        raise BoardError(f"Input data must have {board.n} items in each string.")
     logger.info("Setting board...")
     for i in range(board.n):
         rowdata = list(data[i])
@@ -117,7 +133,8 @@ def init_board(board: Board, data:list) -> None:
 
 def is_solved(board: Board) -> bool:
     """Checks if board is solved (no empty cells and valid)."""
-    assert board.check_board(), f"Error in board!\n{board}"
+    if not board.check_board():
+        raise BoardError(f"Error in board!\n{board}")
     return not any(cell.value == '.' for row in board.data for cell in row)
 
 

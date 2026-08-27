@@ -6,7 +6,7 @@ from src.solver.board import Board, init_board
 from src.solver.solve import solve
 
 PUZZLES = {
-    'SUDOKU_1': {
+    'SUDOKU_9x9': {
         'unsolved': [
             '...26.7.1',
             '68..7..9.',
@@ -27,20 +27,32 @@ PUZZLES = {
             '519326874',
             '248957136',
             '763418259'],
-        }
+        },
+    'SUDOKU_4x4': {
+        'unsolved': [
+            '12.4',
+            '.412',
+            '21.3',
+            '432.'],
+        'solved': [
+            '1234',
+            '3412',
+            '2143',
+            '4321'],
+        },
     }
 
 
 @pytest.fixture
 def board():
-    """Create a 9x9 board."""
-    b = Board(9)
-    init_board(b, PUZZLES['SUDOKU_1']['unsolved'])
+    """Create and initialise the default (9x9) test board."""
+    data = PUZZLES['SUDOKU_9x9']['unsolved']
+    b = Board(len(data))
+    init_board(b, data)
     return b
 
 
 @pytest.fixture
-def solved_board(board):
+def solved_board(board: Board):
     """Solve and return a board."""
-    solve(board)
-    return board
+    return solve(board)
