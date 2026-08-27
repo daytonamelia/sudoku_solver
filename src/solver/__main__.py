@@ -1,5 +1,5 @@
 '''
-Simple soduku solver.
+Simple sudoku solver.
 https://hodoku.sourceforge.net/en/techniques.php
 '''
 import logging
@@ -10,12 +10,12 @@ from .solve import solve
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 
-def main(_n: int, _data: list) -> None:
+def main(n: int, data: list) -> None:
     '''
     Orchestrator and printing.
     '''
-    board = Board(_n)
-    init_board(board, _data)
+    board = Board(n)
+    init_board(board, data)
     print('\n---\n')
     print(board)
     print('\n')

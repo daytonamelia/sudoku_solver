@@ -6,62 +6,59 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-VALID_NUMS = {str(i) for i in range(1, 10)}
-
 class Cell:
     '''
-    A single sudoku cell with coordinates x, y. '.' indicates an empty cell.
+    A single sudoku cell with coordinates col, row. '.' indicates an empty cell.
     '''
-    def __init__(self, _x: int, _y: int, _value: str = '.', ) -> None:
-        '''Creates a cell with coordinates col x, row y, block z, and an optional value.'''
-        self.x = _x # col
-        self.y =_y # row
-        self.z = self.find_block() # block
-        self.value = _value # value
-        self.pencil = set() # pencil marks
+    def __init__(self, col: int, row: int, value: str = '.', ) -> None:
+        '''Creates a cell with coordinates (col, row, block), and an optional value.'''
+        self.col = col
+        self.row = row
+        self.block = self.find_block()
+        self.value = value
+        self.pencil = set()
 
     def find_block(self) -> int:
-        '''Finds which block (z) the cell is in. Returns block number 0-8.'''
-        row_block = self.y // 3
-        col_block = self.x // 3
-        return row_block * 3 + col_block
+        '''Finds which block the cell is in. Returns block number 0-8.'''
+        return (self.row // 3) * 3 + (self.col // 3)
 
     def __str__(self) -> str:
         '''Returns cell value as a string.'''
         return str(self.value)
 
-    def set(self, _value:str) -> None:
+    def set(self, value:str) -> None:
         '''Sets the value of a cell to a new value.'''
-        logger.info("Setting cell at (%d, %d) to %s", self.x, self.y, _value)
-        self.value = _value
+        logger.info("Setting cell at (%d, %d) to %s", self.col, self.row, value)
+        self.value = value
 
-    def set_pencil(self, _marks: set[str]) -> None:
+    def set_pencil(self, marks: set[str]) -> None:
         '''Update the cell's pencil marks.'''
-        self.pencil = _marks
+        self.pencil = marks
 
 
 class Board:
     '''
     A square sudoku board of nxn Cell objects.
     '''
-    def __init__(self, _n:int=9) -> None:
+    def __init__(self, n:int=9) -> None:
         '''Creates an empty square board of n lists of Cells within a list.'''
-        self.n = _n
-        self.data = [[Cell(x, y) for x in range(self.n)] for y in range(self.n)]
+        self.n = n
+        self.valid_nums = {str(i) for i in range(1, n+1)}
+        self.data = [[Cell(col, row) for col in range(self.n)] for row in range(self.n)]
 
     def __str__(self) -> str:
         '''Returns board as space-delineated string with each row as a new line.'''
         board_rows = [' '.join(str(cell) for cell in row) for row in self.data]
         return '\n'.join(board_rows)
 
-    def set_cell(self, value:str, x:int, y:int) -> None:
-        '''Given coordinates, fills a single cell on the board.'''
-        self.data[y][x].set(value)
+    def set_cell(self, value:str, col:int, row:int) -> None:
+        '''Given coordinates, fill a single cell on the board.'''
+        self.data[row][col].set(value)
 
-    def set_row(self, values:list, _y:int) -> None:
-        '''Given a y-coordinate, fill the row with a list of values.'''
+    def set_row(self, values:list, row:int) -> None:
+        '''Given a row, fill with list of values.'''
         for i in range(self.n):
-            self.set_cell(values[i], i, _y)
+            self.set_cell(values[i], i, row)
 
     def check_board(self) -> bool:
         '''Checks if board is valid.'''
@@ -69,57 +66,59 @@ class Board:
             row = self.get_row(i)
             col = self.get_col(i)
             block = self.get_block(i)
-            for num in VALID_NUMS:
+            for num in self.valid_nums:
                 row_count = sum(1 for cell in row if cell.value == num)
                 col_count = sum(1 for cell in col if cell.value == num)
                 block_count = sum(1 for cell in block if cell.value == num)
                 if row_count > 1 or col_count > 1 or block_count > 1:
-                    logger.warning("On %s: %d rows, %d cols, %d blocks.", num, row_count, col_count, block_count)
+                    logger.warning("On %s: %d rows, %d cols, %d blocks.",
+                                   num, row_count, col_count, block_count)
                     return False
         return True
 
-    def get_cell(self, x:int, y:int) -> Cell:
-        '''Returns a Cell from x and y coordinates.'''
-        return self.data[y][x]
+    def get_cell(self, col:int, row:int) -> Cell:
+        '''Returns a Cell from coordinates.'''
+        return self.data[row][col]
 
-    def get_row(self, y: int) -> list:
+    def get_row(self, row: int) -> list:
         '''Returns a row as a list of Cell objects.'''
-        return self.data[y]
+        return self.data[row]
 
-    def get_col(self, x: int) -> list:
+    def get_col(self, col: int) -> list:
         '''Returns a column as a list of Cell objects.'''
-        return [row[x] for row in self.data]
+        return [row[col] for row in self.data]
 
-    def get_block(self, z: int) -> list:
-        '''Returns a block as a list of Cell objects. 
-        Z must be between 0-8 inclusive and starts from top-left of the board.'''
-        block = []
-        start_row = (z // 3) * 3
-        start_col = (z % 3) * 3
-        for y in range(start_row, start_row + 3):
-            for x in range(start_col, start_col + 3):
-                block.append(self.data[y][x])
-        return block
+    def get_block(self, n: int) -> list:
+        '''
+        Returns a block as a list of Cell objects. 
+        Z must be between 0-8 inclusive and starts from top-left of the board.
+        '''
+        start_row = (n // 3) * 3
+        start_col = (n % 3) * 3
+        return [self.data[row][col]
+                for row in range(start_row, start_row + 3)
+                for col in range(start_col, start_col + 3)]
 
-def init_board(board_obj: Board, data:list) -> None:
+
+def init_board(board: Board, data:list) -> None:
     '''Fills board with either numbers or .'''
     # Input checks
-    assert len(data) == board_obj.n, \
+    assert len(data) == board.n, \
         f"Input data has length {len(data)}."
     assert all(isinstance(item, str) for item in data), \
         "Input data must contain only strings."
-    assert all(len(item) == board_obj.n for item in data), \
-        "Input data must have 9 items in each string."
+    assert all(len(item) == board.n for item in data), \
+        f"Input data must have {board.n} items in each string."
     logger.info("Setting board...")
-    for i in range(board_obj.n):
+    for i in range(board.n):
         rowdata = list(data[i])
-        board_obj.set_row(rowdata, i)
+        board.set_row(rowdata, i)
 
 
-def is_solved(_board: Board) -> bool:
+def is_solved(board: Board) -> bool:
     '''Checks if board is solved (no empty cells and valid).'''
-    assert _board.check_board(), f"Error in board!\n{_board}"
-    return not any(cell.value == '.' for row in _board.data for cell in row)
+    assert board.check_board(), f"Error in board!\n{board}"
+    return not any(cell.value == '.' for row in board.data for cell in row)
 
 
 def count_list_of_sets(in_list:list) -> dict:
@@ -134,7 +133,6 @@ def count_list_of_sets(in_list:list) -> dict:
 def find_unique_set_values(in_list: list) -> list:
     '''Given a list of sets, find the index and values of sets with unique values.'''
     value_counts = count_list_of_sets(in_list)
-    # Find sets that contain unique values
     result = []
     for i, s in enumerate(in_list):
         unique_in_set = {value for value in s if value_counts[value] == 1}
