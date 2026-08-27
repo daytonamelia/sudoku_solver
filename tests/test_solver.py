@@ -2,8 +2,8 @@
 End-to-end solver tests.
 """
 import pytest
-from solver.board import Board, init_board
-from solver.solve import solve
+from sudoku_solver.board import Board, init_board
+from sudoku_solver.solve import solve
 from conftest import PUZZLES
 
 

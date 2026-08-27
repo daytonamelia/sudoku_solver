@@ -1,7 +1,7 @@
 """
 Tests for Board and Cell.
 """
-from solver.board import Board, init_board, is_solved
+from sudoku_solver.board import Board, init_board, is_solved
 from conftest import PUZZLES
 
 

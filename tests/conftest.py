@@ -7,8 +7,8 @@ Puzzles are loaded from src/test/puzzles/. Each puzzle pair is two files:
 """
 import pathlib
 import pytest
-from solver.board import Board, init_board
-from solver.solve import solve
+from sudoku_solver.board import Board, init_board
+from sudoku_solver.solve import solve
 
 _PUZZLE_DIR = pathlib.Path(__file__).parent / "puzzles"
 
