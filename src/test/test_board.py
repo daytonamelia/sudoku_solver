@@ -1,8 +1,8 @@
 """
 Tests for Board and Cell.
 """
-from src.solver.board import Board, init_board, is_solved
-from src.test.conftest import PUZZLES
+from solver.board import Board, init_board, is_solved
+from conftest import PUZZLES
 
 
 def test_board_dimensions() -> None:
@@ -76,7 +76,7 @@ def test_is_solved_false_on_unsolved(board: Board) -> None:
 def test_4x4_block_structure() -> None:
     """A 4x4 board uses 2x2 blocks — each block contains exactly the right cells."""
     b = Board(4)
-    init_board(b, PUZZLES['SUDOKU_4x4']['unsolved'])
+    init_board(b, PUZZLES['sudoku_4x4']['unsolved'])
     # block 0: rows 0-1, cols 0-1
     assert all(0 <= cell.row <= 1 and 0 <= cell.col <= 1 for cell in b.get_block(0))
     # block 1: rows 0-1, cols 2-3

@@ -1,52 +1,39 @@
 """
 Shared fixtures and puzzle data for the test suite.
-"""
-import pytest
-from src.solver.board import Board, init_board
-from src.solver.solve import solve
 
-PUZZLES = {
-    'SUDOKU_9x9': {
-        'unsolved': [
-            '...26.7.1',
-            '68..7..9.',
-            '19...45..',
-            '82.1...4.',
-            '..46.29..',
-            '.5...3.28',
-            '..93...74',
-            '.4..5..36',
-            '7.3.18...'],
-        'solved': [
-            '435269781',
-            '682571493',
-            '197834562',
-            '826195347',
-            '374682915',
-            '951743628',
-            '519326874',
-            '248957136',
-            '763418259'],
-        },
-    'SUDOKU_4x4': {
-        'unsolved': [
-            '12.4',
-            '.412',
-            '21.3',
-            '432.'],
-        'solved': [
-            '1234',
-            '3412',
-            '2143',
-            '4321'],
-        },
-    }
+Puzzles are loaded from src/test/puzzles/. Each puzzle pair is two files:
+  <name>.txt       — unsolved grid (one row per line, '.' for empty)
+  <name>_solved.txt — expected solution
+"""
+import pathlib
+import pytest
+from solver.board import Board, init_board
+from solver.solve import solve
+
+_PUZZLE_DIR = pathlib.Path(__file__).parent / "puzzles"
+
+def _load_puzzles() -> dict[str, dict[str, list[str]]]:
+    """Load unsolved/solved puzzles from puzzles directory."""
+    puzzles: dict[str, dict[str, list[str]]] = {}
+    for unsolved_path in sorted(_PUZZLE_DIR.glob("*.txt")):
+        if unsolved_path.stem.endswith("_solved"):
+            continue
+        solved_path = _PUZZLE_DIR / f"{unsolved_path.stem}_solved.txt"
+        if solved_path.exists():
+            puzzles[unsolved_path.stem] = {
+                "unsolved": unsolved_path.read_text().splitlines(),
+                "solved": solved_path.read_text().splitlines(),
+            }
+    return puzzles
+
+
+PUZZLES = _load_puzzles()
 
 
 @pytest.fixture
 def board():
     """Create and initialise the default (9x9) test board."""
-    data = PUZZLES['SUDOKU_9x9']['unsolved']
+    data = PUZZLES['sudoku_9x9']['unsolved']
     b = Board(len(data))
     init_board(b, data)
     return b

@@ -1,8 +1,8 @@
 """
 Tests for pencil mark logic.
 """
-from src.solver.board import Board
-from src.solver.pencil import simple_pencil, update_pencil
+from solver.board import Board
+from solver.pencil import simple_pencil, update_pencil
 
 
 def test_simple_pencil_returns_set(board: Board) -> None:

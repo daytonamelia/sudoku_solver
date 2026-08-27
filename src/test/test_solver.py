@@ -2,9 +2,9 @@
 End-to-end solver tests.
 """
 import pytest
-from src.solver.board import Board, init_board
-from src.solver.solve import solve
-from src.test.conftest import PUZZLES
+from solver.board import Board, init_board
+from solver.solve import solve
+from conftest import PUZZLES
 
 
 @pytest.mark.parametrize("puzzle", PUZZLES.values(), ids=PUZZLES.keys())
