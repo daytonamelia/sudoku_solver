@@ -1,6 +1,6 @@
-'''
+"""
 Sudoku solver orchestrator.
-'''
+"""
 import logging
 from typing import Callable
 
@@ -11,10 +11,10 @@ logger = logging.getLogger(__name__)
 
 
 def solve_groups(board: Board, solver: Callable) -> bool:
-    '''
+    """
     Uses a solver function on every group until no more progress can be made.
     Returns True if any changes were made to the board.
-    '''
+    """
     total_changed = False
     while True:
         row_changed = solver(board, board.get_row)
@@ -28,7 +28,7 @@ def solve_groups(board: Board, solver: Callable) -> bool:
 
 
 def solve(board: Board) -> Board:
-    '''Main sudoku solver logic.'''
+    """Main sudoku solver logic."""
     # strategies ordered cheapest -> most expensive
     strategies = [
         last_digit,

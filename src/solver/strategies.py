@@ -1,6 +1,6 @@
-'''
+"""
 Sudoku olver functions and strategies.
-'''
+"""
 
 from typing import Callable
 
@@ -9,10 +9,10 @@ from .pencil import find_pencil
 
 
 def last_digit(board: Board, get_group: Callable) -> bool:
-    '''
+    """
     Solves for the last digit for a group until no more progress can be made.
     Returns True if any changes were made to the board.
-    '''
+    """
     changed = False
     for i in range(board.n):
         group = get_group(i) # Get group
@@ -25,12 +25,12 @@ def last_digit(board: Board, get_group: Callable) -> bool:
 
 
 def naked_single(board:Board, get_group: Callable) -> bool:
-    '''
+    """
     Solves for naked singles for a group until no more progress can be made.
     Returns True if any changes were made to the board.
     
     Note: get_group is a logic artifact, not used but needs to stay
-    '''
+    """
     total_changed = False
     while True:
         iteration_changed = False
@@ -50,10 +50,10 @@ def naked_single(board:Board, get_group: Callable) -> bool:
 
 
 def hidden_single(board:Board, get_group: Callable) -> bool:
-    '''
+    """
     Solves for hidden singles for a group until no more progress can be made.
     Return True if any changes were made to the board.
-    '''
+    """
     changed = False
     for i in range(board.n):
         group = get_group(i)

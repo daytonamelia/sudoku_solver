@@ -1,10 +1,10 @@
-'''
+"""
 Pencil mark logic and strategies.
-'''
+"""
 from .board import Board, Cell
 
 def update_pencil(board:Board) -> None:
-    '''Update pencil marks for the entire board.'''
+    """Update pencil marks for the entire board."""
     for row in range(board.n):
         for col in range(board.n):
             cell = board.get_cell(col, row)
@@ -14,7 +14,7 @@ def update_pencil(board:Board) -> None:
 
 
 def find_pencil(board: Board, cell: Cell) -> int:
-    '''Find pencil marks for a cell and returns how many pencil marks that cell has.'''
+    """Find pencil marks for a cell and returns how many pencil marks that cell has."""
     if cell.value != '.':
         return 0
     # Set simple pencil marks to start
@@ -26,7 +26,7 @@ def find_pencil(board: Board, cell: Cell) -> int:
 
 
 def simple_pencil(board: Board, cell: Cell) -> set:
-    '''Given a cell, find which pencil marks are possible with simple logic.'''
+    """Given a cell, find which pencil marks are possible with simple logic."""
     row = {cell.value for cell in board.get_row(cell.row) if cell.value != '.'}
     col = {cell.value for cell in board.get_col(cell.col) if cell.value != '.'}
     block = {cell.value for cell in board.get_block(cell.block) if cell.value != '.'}
@@ -35,7 +35,7 @@ def simple_pencil(board: Board, cell: Cell) -> set:
 
 
 def locked_candidates(board: Board, cell: Cell) -> None:
-    '''Given a cell, find locked candiates for pencil marks.'''        
+    """Given a cell, find locked candiates for pencil marks."""        
     # Type I (pointing) by block
     row = [cell for cell in board.get_row(cell.row) if cell.value == '.']
     col = [cell for cell in board.get_col(cell.col) if cell.value == '.']
@@ -67,7 +67,7 @@ def locked_candidates(board: Board, cell: Cell) -> None:
 
 
 def hidden_subsets(_board: Board, _cell: Cell) -> None:
-    '''Given a cell find hidden subsets (pairs, triples, quadruples) for that cell.'''
+    """Given a cell find hidden subsets (pairs, triples, quadruples) for that cell."""
     # TODO: Hidden pair
     row = [cell for cell in _board.get_row(_cell.row) if cell.value == '.']
     col = [cell for cell in _board.get_col(_cell.col) if cell.value == '.']

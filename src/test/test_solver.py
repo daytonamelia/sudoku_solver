@@ -1,42 +1,31 @@
 """
-Pytest framework.
+End-to-end solver tests.
 """
 import pytest
 from src.solver.board import Board, init_board
 from src.solver.solve import solve
-
-UNSOLVED = [
-    '...26.7.1',
-    '68..7..9.',
-    '19...45..',
-    '82.1...4.',
-    '..46.29..',
-    '.5...3.28',
-    '..93...74',
-    '.4..5..36',
-    '7.3.18...']
-
-SOLVED = [
-    '435269781',
-    '682571493',
-    '197834562',
-    '826195347',
-    '374682915',
-    '951743628',
-    '519326874',
-    '248957136',
-    '763418259']
+from src.test.conftest import PUZZLES
 
 
-@pytest.fixture
-def solved_board():
+@pytest.mark.parametrize("puzzle", PUZZLES.values(), ids=PUZZLES.keys())
+def test_solve_completes(puzzle):
+    """solve leaves no empty cells on a solvable puzzle."""
     board = Board(9)
-    init_board(board, UNSOLVED)
+    init_board(board, puzzle['unsolved'])
     solve(board)
-    return board
+    assert not any(cell.value == '.' for row in board.data for cell in row)
 
 
-def test_solve(solved_board):
-    result = [' '.join(str(cell) for cell in row) for row in solved_board.data]
-    expected = [' '.join(row) for row in SOLVED]
-    assert result == expected
+@pytest.mark.parametrize("puzzle", PUZZLES.values(), ids=PUZZLES.keys())
+def test_solve_correct(puzzle):
+    """solve produces the known correct solution for each puzzle."""
+    board = Board(9)
+    init_board(board, puzzle['unsolved'])
+    solve(board)
+    result = [''.join(str(cell) for cell in row) for row in board.data]
+    assert result == puzzle['solved']
+
+
+def test_solve_board_valid(solved_board):
+    """The solved board passes the validity check (no duplicate digits)."""
+    assert solved_board.check_board()

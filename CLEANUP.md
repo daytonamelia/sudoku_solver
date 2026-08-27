@@ -30,8 +30,3 @@ Use a proper `if/raise`.
 `main(_n, _data)` takes `_n` as a parameter, but block size is hardcoded to 3 and
 `VALID_NUMS` is always 1–9. Either remove `_n` and hardcode `9`, or make board size
 truly configurable end-to-end.
-
-### 14. `__main__.py` imports from the test suite
-`from test.test_solver import UNSOLVED` is a reversed dependency — source code should
-never import from tests. Move the puzzle data into `__main__.py` (or a `data.py`),
-and have the test import from there.
